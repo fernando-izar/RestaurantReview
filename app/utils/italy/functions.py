@@ -25,7 +25,7 @@ def get_reviewer(element, template_type):
         reviewer_element = element.find('div', class_='_1AzTo')
         return reviewer_element.text.strip()
     elif template_type == TemplateType.TYPE2:
-        reviewer_element = element.find('h3', class_='c-reviewer-info')
+        reviewer_element = element.find('h3', class_='c-reviews-item-reviewer')
         return reviewer_element.text.strip()
     else:  
         return None
