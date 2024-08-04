@@ -91,7 +91,21 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
         # rating_div = element.find('div', class_='_15tmo', attrs={'data-qa': 'rating-display-element'})
         # voto_title = rating_div['title']
         # voto = Decimal(voto_title.split(' ')[0])  
-        voto = 5
+        rating_div = element.find('div', class_='_15tmo')
+        if rating_div:
+            voto_title = rating_div['title']
+            voto = float(voto_title.split(' ')[0])
+
+        if not rating_div:
+            rating_div = element.find('div', class_='RatingMultiStarVariant_c-rating-mask_1c0Q3')
+
+            if rating_div:
+                style = rating_div['style']
+                percentage = float(style.split('--starRatingPercentage: ')[1].replace('%;', ''))
+                voto = (percentage / 100) * 5
+        
+
+        
         # Extract text
         testo_element = element.find('b', class_='_3Clmt')
         if not testo_element:
