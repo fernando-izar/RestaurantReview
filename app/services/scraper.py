@@ -37,8 +37,7 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
         
         page_source = driver.page_source
     finally:
-        # driver.quit()
-        ...
+        driver.quit()
 
     soup = BeautifulSoup(page_source, "html.parser")
     reviews = []
