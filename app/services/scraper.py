@@ -28,15 +28,23 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
 
     try:
         driver.get(url)
-        # element = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located([(By.CLASS_NAME, "c-reviews-items"), (By.CLASS_NAME, "vEI0Do")])
-        # )
-        # if not element:
-        #     return {"message": "No reviews found"}
+
+        try:
+            WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "vEI0Do"))
+        )
+        except:
+            WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "c-reviews-items"))
+        )
+        if not (driver.find_elements(By.CLASS_NAME, "c-reviews-items") or driver.find_elements(By.CLASS_NAME, "vEI0Do")):
+            with open('page_source.html', 'w', encoding='utf-8') as file:
+                file.write(page_source)
+            return {"message": "No reviews found"}
         page_source = driver.page_source
     finally:
         ...
-        driver.quit()
+        # driver.quit()
 
     # Gravar o conteúdo de page_source em um arquivo externo
     with open('page_source.html', 'w', encoding='utf-8') as file:
@@ -60,17 +68,24 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
     review_elements = soup.find_all('div', class_='vEI0Do')
     print(len(review_elements))
     if not review_elements:
-        review_elememnts = soup.find_all('div', class_='c-reviews-item') 
+        review_elements = soup.find_all('div', class_='c-reviews-item') 
     
     for element in review_elements:
         # Extract reviewer
         reviewer_element = element.find('div', class_='_1AzTo')
+        if not reviewer_element:
+            reviewer_element = element.find('h3', attrs={'data-test-id': 'review-author'})
         reviewer = reviewer_element.text.strip() if reviewer_element else 'Test User'
         
         # Extract date
-        date_str_element = element.find('b', class_='Tcels') or element.find('b', class_='c-reviews-item-date')
+        date_str_element = element.find('b', class_='Tcels')
         date_str = date_str_element.text.strip() if date_str_element else None
-        review_date = datetime.strptime(date_str, '%A %d %B %Y').date() if date_str else datetime.now().date()
+        review_date = datetime.strptime(date_str, '%A %d %B %Y').date() if date_str else None
+
+        if not review_date:
+            date_str_element = element.find('p', class_='c-reviews-item-date')
+            date_str = date_str_element.text.strip() if date_str_element else None
+            review_date = datetime.strptime(date_str, '%d/%m/%Y').date() if date_str else None
         
         # Extract rating
         # rating_div = element.find('div', class_='_15tmo', attrs={'data-qa': 'rating-display-element'})
@@ -80,7 +95,7 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
         # Extract text
         testo_element = element.find('b', class_='_3Clmt')
         if not testo_element:
-            testo_element = element.find('b', attrs={'data-test-id': 'review-text'})
+            testo_element = element.find('p', attrs={'data-test-id': 'review-text'})
         testo = testo_element.text if testo_element else None
         
         # Sentiment is set to None as per requirement
