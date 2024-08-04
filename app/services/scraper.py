@@ -38,23 +38,21 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
             EC.presence_of_element_located((By.CLASS_NAME, "c-reviews-items"))
         )
         if not (driver.find_elements(By.CLASS_NAME, "c-reviews-items") or driver.find_elements(By.CLASS_NAME, "vEI0Do")):
-            with open('page_source.html', 'w', encoding='utf-8') as file:
-                file.write(page_source)
-            return {"message": "No reviews found"}
+            return []
+        
         page_source = driver.page_source
     finally:
         ...
-        # driver.quit()
+        driver.quit()
 
     # Gravar o conteúdo de page_source em um arquivo externo
-    with open('page_source.html', 'w', encoding='utf-8') as file:
-        file.write(page_source)
+    # with open('page_source.html', 'w', encoding='utf-8') as file:
+    #     file.write(page_source)
 
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-    }
-    
+    # Option 2: Using requests
+    # headers = {
+    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    # }
 
     # try:
     #     response = requests.get(url, headers=headers)
