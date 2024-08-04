@@ -12,14 +12,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import locale
-
-locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
+from app.utils.italy.functions import get_type_of_review, get_review_elements, get_reviewer, get_review_date, get_review_note, get_review_text, get_review_sentiment
 
 def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
     url = f"https://www.justeat.it/restaurants-{restaurant_name}/reviews"
 
     # ChromeDriver Configuration
-    # service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
@@ -42,10 +40,9 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
         
         page_source = driver.page_source
     finally:
-        ...
         driver.quit()
 
-    # Gravar o conteúdo de page_source em um arquivo externo
+    # Gravar o conteúdo de page_source em um arquivo externo (debug)
     # with open('page_source.html', 'w', encoding='utf-8') as file:
     #     file.write(page_source)
 
@@ -63,62 +60,34 @@ def scrape_reviews(restaurant_name: str) -> List[RestaurantReview]:
 
     soup = BeautifulSoup(page_source, "html.parser")
     reviews = []
-    review_elements = soup.find_all('div', class_='vEI0Do')
-    print(len(review_elements))
-    if not review_elements:
-        review_elements = soup.find_all('div', class_='c-reviews-item') 
+
+    template_type = get_type_of_review(soup)
+
+    review_elements = get_review_elements(soup, template_type)
     
     for element in review_elements:
         # Extract reviewer
+        reviewer = get_reviewer(element, template_type)
         reviewer_element = element.find('div', class_='_1AzTo')
-        if not reviewer_element:
-            reviewer_element = element.find('h3', attrs={'data-test-id': 'review-author'})
-        reviewer = reviewer_element.text.strip() if reviewer_element else 'Test User'
         
         # Extract date
-        date_str_element = element.find('b', class_='Tcels')
-        date_str = date_str_element.text.strip() if date_str_element else None
-        review_date = datetime.strptime(date_str, '%A %d %B %Y').date() if date_str else None
-
-        if not review_date:
-            date_str_element = element.find('p', class_='c-reviews-item-date')
-            date_str = date_str_element.text.strip() if date_str_element else None
-            review_date = datetime.strptime(date_str, '%d/%m/%Y').date() if date_str else None
+        review_date = get_review_date(element, template_type)
         
-        # Extract rating
-        # rating_div = element.find('div', class_='_15tmo', attrs={'data-qa': 'rating-display-element'})
-        # voto_title = rating_div['title']
-        # voto = Decimal(voto_title.split(' ')[0])  
-        rating_div = element.find('div', class_='_15tmo')
-        if rating_div:
-            voto_title = rating_div['title']
-            voto = float(voto_title.split(' ')[0])
-
-        if not rating_div:
-            rating_div = element.find('div', class_='RatingMultiStarVariant_c-rating-mask_1c0Q3')
-
-            if rating_div:
-                style = rating_div['style']
-                percentage = float(style.split('--starRatingPercentage: ')[1].replace('%;', ''))
-                voto = (percentage / 100) * 5
-        
-
+        # Extract review note
+        review_note = get_review_note(element, template_type)
         
         # Extract text
-        testo_element = element.find('b', class_='_3Clmt')
-        if not testo_element:
-            testo_element = element.find('p', attrs={'data-test-id': 'review-text'})
-        testo = testo_element.text if testo_element else None
-        
-        # Sentiment is set to None as per requirement
-        sentiment = None
+        review_text = get_review_text(element, template_type)
+       
+        # Extract sentiment
+        sentiment = get_review_sentiment(element, template_type)
         
         review = RestaurantReview(
             data=review_date,
             reviewer=reviewer,
-            testo=testo,
+            testo=review_text,
             sentiment=sentiment,
-            voto=voto
+            voto=review_note
         )
         reviews.append(review)
 
