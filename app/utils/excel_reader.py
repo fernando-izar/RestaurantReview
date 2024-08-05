@@ -7,18 +7,18 @@ import ipdb
 
 def read_reviews_from_excel(file_path: str) -> List[RestaurantReview]:
     df = pd.read_excel(file_path)
-    print(df)
     reviews = []
+
     for _, row in df.iterrows():
         date_value = row['data']
         if not isinstance(date_value, datetime):
             date_value = datetime.strptime(str(date_value), '%Y-%m-%d')
         else: 
             date_value = date_value.date()
+
         testo = row['testo'] if not pd.isna(row['testo']) else None
         sentiment = row['sentiment'] if not pd.isna(row['sentiment']) else 0
-        # ipdb.set_trace()
-        print (row['reviewer'], row['testo'], row['sentiment'], row['voto'])
+
         review = RestaurantReview(
             data=date_value,
             reviewer=row['reviewer'],
@@ -27,4 +27,5 @@ def read_reviews_from_excel(file_path: str) -> List[RestaurantReview]:
             voto=Decimal(row['voto'])
         )
         reviews.append(review)
+        
     return reviews
