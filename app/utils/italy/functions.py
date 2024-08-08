@@ -60,8 +60,8 @@ def get_review_text(element, template_type):
         testo_element = element.find('b', class_='_3Clmt')
         return testo_element.text if testo_element else None
     elif template_type == TemplateType.TYPE2:
-        testo_element = element.find('p', class_='c-review-text')
-        return testo_element.text if testo_element else None
+        testo_element = element.find('p', attrs={"data-test-id" : "review-text"})
+        return testo_element.text.strip() if testo_element else None
     else:
         return
     
